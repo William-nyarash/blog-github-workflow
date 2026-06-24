@@ -1,0 +1,47 @@
+name:  Blog deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  build_and_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: install deps
+        run: npm run install
+
+      - name: run lint
+        run: npm run lint 
+
+      - name: run test
+        run: npm run test 
+
+      - name: build 
+        run: npm run build 
+    
+  deploy: 
+    needs: build_and_test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with: 
+          node-version: '24'
+
+      - name: install deps
+        run: npm install
+      - name: Trigger deployment
+        if: ${{github.event_name == 'push' && !contains(toJson(github.event.commits.head_commit.message), '#skip') }}   
+        run: curl ${{ secrets.RENDER_DEPLOY_HOOK }}
